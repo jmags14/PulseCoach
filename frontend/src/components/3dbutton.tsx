@@ -1,6 +1,6 @@
 // 3DButton.tsx
 import React, { useState } from "react";
-import "./3DButton.css";
+import "../styles/3Dbutton.css";
 
 interface Button3DProps {
   children: React.ReactNode;
