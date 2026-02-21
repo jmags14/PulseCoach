@@ -1,10 +1,10 @@
 const { evaluateTriggers } = require("./triggerEngine");
 const { computeSummary } = require("./summaryEngine");
-/*const {
+const {
   generateLiveFeedback,
   generateSummary,
   answerQuestion,
-} = require("./llmWrapper");*/
+} = require("./llmWrapper");
 
 class AgentManager {
   constructor(socket) {
