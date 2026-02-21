@@ -88,9 +88,29 @@ export class CPREngine {
     const now = Date.now();
     this.compressionTimestamps = this.compressionTimestamps.filter(
       (t) => now - t < 10000
-    );
+      );
+    
+      
+    // All of this below is the BPM calculation
+    let bpm = 0;
 
-    const bpm = this.compressionTimestamps.length * 6;
+    if (this.compressionTimestamps.length >= 2) {
+      let sumIntervals = 0;
+      for (let i = 1; i < this.compressionTimestamps.length; i++) {
+        sumIntervals +=
+          this.compressionTimestamps[i] - this.compressionTimestamps[i - 1];
+      }
+
+      const avgIntervalMs =
+        sumIntervals / (this.compressionTimestamps.length - 1);
+
+      if (avgIntervalMs > 0) {
+        bpm = 60000 / avgIntervalMs;
+      }
+    }
+
+    bpm = Math.round(bpm);
+
 
     // Relative Depth calculation 
     //0.01 = shallow,   0.02 good,   0.03 deep
