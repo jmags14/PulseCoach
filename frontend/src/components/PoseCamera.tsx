@@ -9,6 +9,7 @@ type PoseCameraProps = {
   running: boolean;
   onPoseDetected?: (landmarks: any[]) => void;
   ready?: boolean;
+  //highlightColor?: string | null;
 };
 
 type Connection = { start: number; end: number };
@@ -17,6 +18,7 @@ export default function PoseCamera({
   running,
   onPoseDetected,
   ready,
+  //highlightColor,
 }: PoseCameraProps) {
   // References for video, canvas, pose model, animation frame, and media stream
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -25,6 +27,8 @@ export default function PoseCamera({
   const animationRef = useRef<number | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const readyRef = useRef(ready);
+  //const highlightColorRef = useRef<string | null>(highlightColor);
+
   //store previous frame upper body for smoothing 
   const prevUpperBody = useRef<Array<{ x: number; y: number; z?: number }> | null>(null);
 
@@ -65,6 +69,10 @@ export default function PoseCamera({
     readyRef.current = ready; // update ref whenever prop changes
   }, [ready]);
 
+  /*useEffect(() => {
+    highlightColorRef.current = highlightColor;
+  }, [highlightColor]);*/
+
   const startCamera = async () => {
     if (!videoRef.current) return;
     //request access to webcam
@@ -86,8 +94,32 @@ export default function PoseCamera({
   };
 
   const stopCamera = () => {
+    // Stop the camera stream
     streamRef.current?.getTracks().forEach((track) => track.stop());
-    cancelAnimationFrame(animationRef.current!);
+    streamRef.current = null;
+
+    // Cancel the animation loop
+    if (animationRef.current !== null) {
+      cancelAnimationFrame(animationRef.current);
+      animationRef.current = null;
+    }
+
+    // Clear the video element
+    if (videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.srcObject = null;
+    }
+
+    // Clear the canvas
+    if (canvasRef.current) {
+      const ctx = canvasRef.current.getContext("2d");
+      if (ctx) {
+        ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+      }
+    }
+
+    // Reset previous frame
+    prevUpperBody.current = null;
   };
 
   //main function for detecting poses and drawing skeletons
@@ -156,7 +188,7 @@ export default function PoseCamera({
         drawingUtils.drawConnectors(
           landmarks, 
           upperBodyConnections,
-          {color: readyRef.current ? "lime" : "red", lineWidth: 3 }
+          {color: (readyRef.current ? "lime" : "red"), lineWidth: 3 }
         );
         //drawingUtils.drawConnectors(landmarks, POSE.connections);
 

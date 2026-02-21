@@ -1,0 +1,56 @@
+.waveform-container {
+  width: 80%;       /* scales with screen width */
+  max-width: 900px;
+  height: 25vh;     /* relative to viewport height */
+  min-height: 150px; 
+  position: relative;
+}
+
+/* SVG full size */
+.waveform {
+  width: 100%;
+  height: 100%;
+}
+
+/* Neon ECG line */
+.wave {
+  fill: none;
+  stroke: #00f7ff;
+  stroke-width: 4;
+  stroke-linecap: round;
+
+  /* Neon glow effect */
+  filter: drop-shadow(0 0 6px #00f7ff)
+          drop-shadow(0 0 15px #00f7ff)
+          drop-shadow(0 0 30px #009dff);
+
+  /* Animation */
+  stroke-dasharray: 400;
+  stroke-dashoffset: 0;
+  animation: moveLine 2s linear infinite,
+             pulseGlow 2s ease-in-out infinite alternate;
+}
+
+/* Moving ECG animation */
+@keyframes moveLine {
+  from {
+    stroke-dashoffset: 0;
+  }
+  to {
+    stroke-dashoffset: -800;
+  }
+}
+
+/* Soft breathing glow */
+@keyframes pulseGlow {
+  from {
+    filter: drop-shadow(0 0 6px #00f7ff)
+            drop-shadow(0 0 15px #00f7ff)
+            drop-shadow(0 0 30px #009dff);
+  }
+  to {
+    filter: drop-shadow(0 0 12px #00f7ff)
+            drop-shadow(0 0 25px #00f7ff)
+            drop-shadow(0 0 50px #009dff);
+  }
+}

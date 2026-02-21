@@ -12,7 +12,6 @@ function computeSummary(session) {
   const avg = (arr) => arr.reduce((a, b) => a + b, 0) / arr.length;
 
   const avgBPM = avg(metrics.map((m) => m.bpm));
-  const depths = metrics.map((m) => m.relativeDepth);
 
   const elbowLockedPercent =
     (metrics.filter((m) => m.elbowsLocked).length / metrics.length) * 100;
@@ -21,12 +20,9 @@ function computeSummary(session) {
     type: "summary",
     text: `Session complete. Avg BPM ${avgBPM.toFixed(
       0
-    )}. Avg depth ${avg(depths).toFixed(1)}cm.`,
+    )}. Compression Count ${metrics[metrics.length - 1].compressionCount}.`,
     stats: {
       avgBPM,
-      avgDepth: avg(depths),
-      minDepth: Math.min(...depths),
-      maxDepth: Math.max(...depths),
       elbowLockedPercent,
       compressionCount: metrics[metrics.length - 1].compressionCount,
       duration,

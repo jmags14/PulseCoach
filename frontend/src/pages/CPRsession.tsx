@@ -207,7 +207,6 @@ function CPRsession() {
         <div>
             <h2>Live Metrics</h2>
             <h2>BPM: {metrics.bpm}</h2>
-            <h2>Depth: {metrics.relativeDepth.toFixed(4)}</h2>
             <h2>Elbows Locked: {metrics.elbowsLocked ? "Yes" : "No"}</h2>
             {/*<h2>Feedback: {metrics.feedback || "..."}</h2>*/}
         </div>
@@ -221,7 +220,6 @@ function CPRsession() {
           {summary.stats && (
             <>
               <p>Avg BPM: {summary.stats.avgBPM?.toFixed(0)}</p>
-              <p>Avg Depth: {summary.stats.avgDepth?.toFixed(2)}</p>
               <p>Elbows Locked: {summary.stats.elbowLockedPercent?.toFixed(0)}%</p>
               <p>Duration: {summary.stats.duration?.toFixed(1)}s</p>
             </>
