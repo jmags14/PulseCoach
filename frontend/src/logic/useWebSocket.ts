@@ -11,6 +11,7 @@ type ServerMessage = {
 
 export function useWebSocket(url: string) {
   const socketRef = useRef<Socket | null>(null);
+  const activeAudioRef = useRef<HTMLAudioElement | null>(null);
   const [connected, setConnected] = useState(false);
   const [messages, setMessages] = useState<ServerMessage[]>([]);
 
@@ -33,7 +34,37 @@ export function useWebSocket(url: string) {
       setMessages((prev) => [...prev, data]);
     });
 
+    socket.on("voiceResponse", (data: any) => {
+      if (!data.audio) return;
+
+      if (typeof window !== "undefined" && window.speechSynthesis?.speaking) {
+        window.speechSynthesis.cancel();
+      }
+
+      if (activeAudioRef.current) {
+        activeAudioRef.current.pause();
+        activeAudioRef.current.currentTime = 0;
+      }
+
+      const audio = new Audio(`data:audio/mpeg;base64,${data.audio}`);
+      activeAudioRef.current = audio;
+      audio.onended = () => {
+        if (activeAudioRef.current === audio) {
+          activeAudioRef.current = null;
+        }
+      };
+
+      audio.play().catch((err) => {
+        console.error("voiceResponse playback error:", err);
+      });
+    });
+
     return () => {
+      if (activeAudioRef.current) {
+        activeAudioRef.current.pause();
+        activeAudioRef.current.currentTime = 0;
+        activeAudioRef.current = null;
+      }
       socket.disconnect();
     };
   }, [url]);

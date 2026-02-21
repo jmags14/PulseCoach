@@ -46,20 +46,7 @@ export default function CPRsession() {
   const { connected, messages, sendMessage } = useWebSocket("http://localhost:8080");
 
   // Audio manager (voice commands)
-  const lastSpokenRef = useRef<string | null>(null);
-  const lastSpokenTimeRef = useRef(0);
   const audioRef = useRef<AudioManager | null>(null);
-
-  const speakFeedback = (text: string, force = false) => {
-    if (!cameraOn && !force) return;
-    if (lastSpokenRef.current === text) return;
-    const now = performance.now();
-    if (now - lastSpokenTimeRef.current < 4000) return;
-    lastSpokenTimeRef.current = now;
-    lastSpokenRef.current = text;
-    const utterance = new SpeechSynthesisUtterance(text);
-    window.speechSynthesis.speak(utterance);
-  };
 
   // Handle pose detection
   const handlePose = (coords: any[]) => {
@@ -174,7 +161,6 @@ export default function CPRsession() {
 
     if (msg.type === "feedback" && msg.text) {
       setTriggerFeedback(msg.text);
-      speakFeedback(msg.text);
     }
 
     if (msg.type === "summary") {
@@ -182,7 +168,7 @@ export default function CPRsession() {
     }
 
     if (msg.type === "voiceReply" && msg.text) {
-      speakFeedback(msg.text, true);
+      setTriggerFeedback(msg.text);
     }
   }, [messages, navigate, metrics]);
 
