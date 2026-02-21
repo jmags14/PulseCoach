@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import SongCarousel from "../components/SongCarousel";
 import ModeSelector from "../components/ModeSelector";
@@ -7,10 +7,16 @@ import "../styles/Dashboard.css";
 
 type Session = {
   id: string;
+  sessionId: string;
   date: string;
-  avgBPM: number;
-  score: number;
+  time: string;
   mode: "train" | "test";
+  avgBPM: number;
+  elbowLockedPercent: number;
+  compressionCount: number;
+  duration: number;
+  score?: number;
+  song?: string;
 };
 
 function Dashboard() {
@@ -18,24 +24,20 @@ function Dashboard() {
 
   const [selectedSong, setSelectedSong] = useState<string>("staying_alive");
   const [mode, setMode] = useState<"train" | "test">("train");
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // In-memory sessions (replace later with backend)
-  const [sessions] = useState<Session[]>([
-    {
-      id: "1",
-      date: "2026-02-20",
-      avgBPM: 108,
-      score: 88,
-      mode: "train",
-    },
-    {
-      id: "2",
-      date: "2026-02-18",
-      avgBPM: 102,
-      score: 91,
-      mode: "test",
-    },
-  ]);
+  useEffect(() => {
+    fetch("http://localhost:8080/api/sessions")
+      .then((res) => res.json())
+      .then((data) => {
+        // MongoDB returns _id, map it to id for the component
+        const mapped = data.map((s: any) => ({ ...s, id: s._id }));
+        setSessions(mapped);
+      })
+      .catch((err) => console.error("Failed to load sessions:", err))
+      .finally(() => setLoading(false));
+  }, []);
 
   const startSession = () => {
     navigate(`/session/${mode}?song=${selectedSong}`);
@@ -47,29 +49,28 @@ function Dashboard() {
       <div className="dashboard-top">
         <div className="song-panel">
           <h2>Select Song</h2>
-          <SongCarousel
-            selected={selectedSong}
-            onSelect={setSelectedSong}
-          />
+          <SongCarousel selected={selectedSong} onSelect={setSelectedSong} />
         </div>
 
         <div className="mode-panel">
-          <ModeSelector
-            mode={mode}
-            onChange={setMode}
-            onStart={startSession}
-          />
+          <ModeSelector mode={mode} onChange={setMode} onStart={startSession} />
         </div>
       </div>
 
       {/* Bottom Section */}
       <div className="sessions-panel">
         <h2>Past Sessions</h2>
-        <div className="sessions-grid">
-          {sessions.map((session) => (
-            <SessionCard key={session.id} session={session} />
-          ))}
-        </div>
+        {loading ? (
+          <p className="sessions-loading">Loading sessions...</p>
+        ) : sessions.length === 0 ? (
+          <p className="sessions-empty">No sessions yet. Start your first one!</p>
+        ) : (
+          <div className="sessions-grid">
+            {sessions.map((session) => (
+              <SessionCard key={session.id} session={session} />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
