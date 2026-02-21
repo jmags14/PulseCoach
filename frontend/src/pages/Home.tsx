@@ -1,6 +1,7 @@
 import "../styles/Home.css";
 import { useNavigate } from "react-router-dom";
 import Waveform from "../components/Waveform";
+import Button3D from "../components/3dbutton";
 
 function Home() {
   const navigate = useNavigate();
@@ -8,12 +9,11 @@ function Home() {
   return (
     <div className="home">
       <Waveform />
-      <button
-        className="start-btn"
+      <Button3D
         onClick={() => navigate("/dashboard")}
       >
         Start
-      </button>
+      </Button3D>
     </div>
   );
 }
