@@ -8,6 +8,12 @@ import { useWebSocket } from "../logic/useWebSocket";
 import { startMetronome, stopMetronome } from "../audio/script";
 import { startTutorial } from "../audio/tts";
 import "../styles/CPRsession.css";
+// song imports
+import dancingQueen from "../audio_clips/audio_dancingqueen.mp3";
+import espresso from "../audio_clips/audio_espresso.mp3";
+import stayinAlive from "../audio_clips/audio_stayinalive.mp3";
+import ruleWorld from "../audio_clips/audio_ruletheworld.mp3";
+import crazyLove from "../audio_clips/audio_crazyinlove.mp3";
 
 type Metrics = {
   bpm: number;
@@ -44,6 +50,9 @@ export default function CPRsession() {
 
   // WebSocket
   const { connected, messages, sendMessage } = useWebSocket("http://localhost:8080");
+
+  // Song audio manager
+  const songAudioRef = useRef<HTMLAudioElement | null>(null);
 
   // Audio manager (voice commands)
   const lastSpokenRef = useRef<string | null>(null);
@@ -94,19 +103,35 @@ export default function CPRsession() {
             setCaption("");
         }
 
-        if (song === "beat_only") {
-            startMetronome(110);
-        } else if (song === "dancing_queen"){
-            // play the actual song file
-            // e.g. new Audio(`/songs/${song}.mp3`).play();
-        } else if (song === "crazy_love"){
+        // metronome only
+        if(song === "beat_only") {
+          startMetronome(110);
+        }
 
-        } else if (song === "rule_world") {
+        else {
+          let audioSrc = stayinAlive; // default song
 
-        } else if (song === "espresso"){
+          if(song == "dancing_queen") audioSrc = dancingQueen;
+          else if(song === "rule_world") audioSrc = ruleWorld;
+          else if(song === "crazy_love") audioSrc = crazyLove;
+          else if(song === "espresso") audioSrc = espresso;
 
-        } else {
-            
+          // stop any previous audio
+          if(songAudioRef.current) {
+            songAudioRef.current.pause();
+            songAudioRef.current.currentTime = 0;
+          }
+
+          const audio = new Audio(audioSrc);
+
+          audio.loop = true;
+          audio.currentTime = 0;
+
+          audio.play().catch(err => {
+            console.warn("Audio play failed:", err);
+          });
+
+          songAudioRef.current = audio;
         }
     }
 
@@ -187,10 +212,23 @@ export default function CPRsession() {
   }, [messages, navigate, metrics]);
 
   const handleEndSession = () => {
+    /*
     stopMetronome();
     window.speechSynthesis.cancel();
     audioStartedRef.current = false;
     setCameraOn(false);
+    navigate("/results", { state: { metrics } });
+    */
+    stopMetronome();
+    if(songAudioRef.current) {
+      songAudioRef.current.pause();
+      songAudioRef.current.currentTime = 0;
+    }
+
+    window.speechSynthesis.cancel();
+    audioStartedRef.current = false;
+    setCameraOn(false);
+
     navigate("/results", { state: { metrics } });
   };
 
