@@ -10,7 +10,7 @@ function Home() {
       <Waveform />
       <button
         className="start-btn"
-        onClick={() => navigate("/cprsession")}
+        onClick={() => navigate("/dashboard")}
       >
         Start
       </button>

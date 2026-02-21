@@ -1,0 +1,26 @@
+.carousel-container {
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+  padding: 20px 0;
+}
+
+.song-card {
+  min-width: 180px;
+  padding: 30px;
+  border-radius: 16px;
+  background: #232730;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+}
+
+.song-card:hover {
+  transform: scale(1.05);
+}
+
+.song-card.active {
+  background: linear-gradient(135deg, #7c5cff, #00d4ff);
+  color: black;
+  transform: scale(1.1);
+}

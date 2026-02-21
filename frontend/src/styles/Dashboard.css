@@ -1,0 +1,31 @@
+.dashboard-container {
+  background: #0f1115;
+  min-height: 100vh;
+  padding: 40px;
+  color: white;
+}
+
+.dashboard-top {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 30px;
+  margin-bottom: 50px;
+}
+
+.song-panel,
+.mode-panel {
+  background: #1a1d24;
+  padding: 30px;
+  border-radius: 20px;
+  box-shadow: 0 0 40px rgba(124, 92, 255, 0.15);
+}
+
+.sessions-panel h2 {
+  margin-bottom: 20px;
+}
+
+.sessions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 20px;
+}
