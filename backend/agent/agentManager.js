@@ -1,5 +1,6 @@
 // Stores the client's socket so it can send messages bacj to the frontend :D!!
 
+const { textToSpeech } = require('./ttsElevenLabs');
 const { evaluateTriggers } = require("./triggerEngine");
 const { computeSummary } = require("./summaryEngine");
 const {
@@ -110,30 +111,30 @@ class AgentManager {
 
   async handleVoiceCommand(text) {
     console.log("Voice command received:", text);
-    console.log("GEMINI KEY LOADED?", !!process.env.GEMINI_API_KEY);  // ← ADD THIS
+    console.log("GEMINI KEY LOADED?", !!process.env.GEMINI_API_KEY);
 
-    try { // Uncommented after applying gemini
-      const response = await answerQuestion(text);
-      console.log("GEMINI RESPONSE:", response.text);  // ← ADD THIS
+    let response;
+    try {
+      response = await answerQuestion(text);
+      console.log("GEMINI RESPONSE:", response.text);
       this.socket.emit("ai_response", response);
     } catch (err) {
-      console.error("LLM voice error:", err);
-
+      console.error("LLM error:", err.message);
       this.socket.emit("ai_response", {
         type: "voiceReply",
         text: "I'm having trouble answering that right now. Keep compressions going.",
       });
+      return;
     }
-    
-    // For now, fake LLM response — can replace with real LLM later    
-    /*const aiResponse = `I received your question: "${text}"`;
-    const response = {
-        type: "voiceReply",
-        text: aiResponse,
-    };
-    this.socket.emit("ai_response", response);
-    */
+
+    try {
+      const audioBase64 = await textToSpeech(response.text);
+      this.socket.emit("voiceResponse", { audio: audioBase64 });
+    } catch (err) {
+      console.error("TTS error:", err.message);
+    }
   }
+
   
   async endSession() {
     if (!this.session.active) return;

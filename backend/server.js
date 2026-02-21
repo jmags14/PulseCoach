@@ -5,6 +5,7 @@ const cors = require("cors");
 
 const { Server } = require("socket.io");
 const { AgentManager } = require("./agent/agentManager");
+const { getTtsRuntimeConfig } = require("./agent/ttsElevenLabs");
 
 const app = express();
 app.use(cors());
@@ -45,4 +46,10 @@ io.on("connection", (socket) => {
 
 server.listen(8080, () => {
   console.log("Server running on port 8080");
+
+  const ttsConfig = getTtsRuntimeConfig();
+  console.log(
+    "TTS config:",
+    `provider=${ttsConfig.provider} model=${ttsConfig.modelId} voice=${ttsConfig.voiceId} keyLoaded=${ttsConfig.hasApiKey}`
+  );
 });
