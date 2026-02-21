@@ -96,9 +96,17 @@ export default function CPRsession() {
 
         if (song === "beat_only") {
             startMetronome(110);
-        } else {
+        } else if (song === "dancing_queen"){
             // play the actual song file
             // e.g. new Audio(`/songs/${song}.mp3`).play();
+        } else if (song === "crazy_love"){
+
+        } else if (song === "rule_world") {
+
+        } else if (song === "espresso"){
+
+        } else {
+            
         }
     }
 

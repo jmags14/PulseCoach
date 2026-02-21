@@ -1,9 +1,12 @@
 import "../styles/SongCarousel.css";
 
 const songs = [
-  { id: "staying_alive", name: "Stayin' Alive" },
-  { id: "another_one", name: "Another One Bites the Dust" },
-  { id: "beat_only", name: "Metronome Beat" },
+  { id: "staying_alive", name: "Stayin' Alive", artist: "Bees Gees" },
+  { id: "dancing_queen", name: "Dancing Queen", artist: "ABBA" },
+  { id: "crazy_love", name: "Crazy in Love", artist: "Carly Rae Jepsen" },
+  { id: "rule_world", name: "Everybody Wants to Rule the World", artist: "Tears for Fears" },
+  { id: "espresso", name: "Espresso", artist: "Sabrina Carpenter" },
+  { id: "beat_only", name: "Metronome Beat", artist: "" },
 ];
 
 type Props = {
@@ -22,7 +25,9 @@ function SongCarousel({ selected, onSelect }: Props) {
           }`}
           onClick={() => onSelect(song.id)}
         >
-          {song.name}
+          {song.name} 
+          <br />
+          {song.artist}
         </div>
       ))}
     </div>

@@ -46,7 +46,6 @@ const { connected, messages, sendMessage } = useWebSocket("http://localhost:8080
           <div className="metrics-grid">
             <MetricCard label="BPM" value={metrics?.bpm ?? "--"} highlight={bpmInRange} />
             <MetricCard label="Elbows Locked" value={elbowsLocked ? "Yes" : "No"} highlight={elbowsLocked} />
-            <MetricCard label="Depth" value={metrics?.relativeDepth ?? "--"} />
             <MetricCard label="Compressions" value={metrics?.compressionCount ?? "--"} />
           </div>
         </>
