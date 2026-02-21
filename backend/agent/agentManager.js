@@ -1,3 +1,5 @@
+// Stores the client's socket so it can send messages bacj to the frontend :D!!
+
 const { evaluateTriggers } = require("./triggerEngine");
 const { computeSummary } = require("./summaryEngine");
 const {
@@ -28,6 +30,8 @@ class AgentManager {
     };
   }
 
+  // The code for starting a session goes under here
+  // Basicallt marks session as either active or inavtive, stores mode, and resets metrics
   startSession(mode) {
     console.log("Session started:", mode);
 
@@ -40,6 +44,7 @@ class AgentManager {
     this.coachingState.lastFeedbackTime = 0;
   }
 
+  // This handles the metrics at every frame
   async handleMetrics(data) {
     if (!this.session.active) return;
 
@@ -70,7 +75,7 @@ class AgentManager {
     if (!issueChanged && !cooldownPassed) return;
     if (this.coachingState.llmBusy) return;
 
-    /*try{
+    try{ //if doesnt work then comment this out again
       this.coachingState.llmBusy = true;
       const dynamicText = await generateLiveFeedback({
         issue: result.issue,
@@ -94,20 +99,22 @@ class AgentManager {
       this.socket.emit("ai_response", result.payload);
     } finally {
       this.coachingState.llmBusy = false;
-    }*/
+    } // it would end here if we were to comment it again
   
-    //before llm
-    this.socket.emit("ai_response", result.payload);
-    this.coachingState.lastIssue = result.issue;
-    this.coachingState.lastFeedbackTime = now;
+    //before llm (disabled for now)
+    // this.socket.emit("ai_response", result.payload);
+    // this.coachingState.lastIssue = result.issue;
+    // this.coachingState.lastFeedbackTime = now;
     
   }
 
-  handleVoiceCommand(text) {
+  async handleVoiceCommand(text) {
     console.log("Voice command received:", text);
+    console.log("GEMINI KEY LOADED?", !!process.env.GEMINI_API_KEY);  // ← ADD THIS
 
-    /*try {
+    try { // Uncommented after applying gemini
       const response = await answerQuestion(text);
+      console.log("GEMINI RESPONSE:", response.text);  // ← ADD THIS
       this.socket.emit("ai_response", response);
     } catch (err) {
       console.error("LLM voice error:", err);
@@ -116,20 +123,21 @@ class AgentManager {
         type: "voiceReply",
         text: "I'm having trouble answering that right now. Keep compressions going.",
       });
-    }*/
+    }
     
     // For now, fake LLM response — can replace with real LLM later    
-    const aiResponse = `I received your question: "${text}"`;
+    /*const aiResponse = `I received your question: "${text}"`;
     const response = {
         type: "voiceReply",
         text: aiResponse,
     };
     this.socket.emit("ai_response", response);
+    */
   }
   
-  endSession() {
+  async endSession() {
     if (!this.session.active) return;
-    /*try {
+    try { // Uncommented after applying gemini
       // Step 1: Deterministic summary
       const rawSummary = computeSummary(this.session);
 
@@ -148,9 +156,6 @@ class AgentManager {
       });
     }
 
-    this.resetSession();*/
-    const summary = computeSummary(this.session);
-    this.socket.emit("ai_response", summary);
     this.resetSession();
   }
 }

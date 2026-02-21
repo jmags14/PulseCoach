@@ -1,3 +1,5 @@
+// Responsible for turning the metrics it receives into a session summary
+
 function computeSummary(session) {
   const metrics = session.metrics;
   const duration = (Date.now() - session.startTime) / 1000;

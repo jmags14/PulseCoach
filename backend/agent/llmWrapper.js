@@ -1,9 +1,7 @@
-// llmCoach.js
-const OpenAI = require("openai");
+// llmCoach.js - DIRECT GEMINI API with AXIOS (100% working)
+const axios = require('axios');
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`;
 
 // Base CPR Instructor personality
 const SYSTEM_PROMPT = `
@@ -16,12 +14,26 @@ Rules:
 - For summaries, provide structured feedback.
 - Do NOT explain CPR theory unless asked.
 - Focus on compressions quality (rate, depth, elbows, fatigue).
-`;    //disregarding depth 
+`;
 
+// Helper function to call Gemini API
+async function callGemini(prompt) {
+  const response = await axios.post(GEMINI_URL, {
+    contents: [{
+      parts: [{ text: prompt }]
+    }]
+  });
+  
+  return response.data.candidates[0].content.parts[0].text;
+}
+
+// This generates live feedback generation
 async function generateLiveFeedback(context) {
   const { issue, metrics, mode } = context;
 
   const userPrompt = `
+${SYSTEM_PROMPT}
+
 Mode: ${mode}
 Issue detected: ${issue}
 Current metrics:
@@ -32,41 +44,24 @@ Current metrics:
 Provide short corrective coaching.
 `;
 
-  const completion = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
-    messages: [
-      { role: "system", content: SYSTEM_PROMPT },
-      { role: "user", content: userPrompt },
-    ],
-    temperature: 0.6,
-  });
-
-  return completion.choices[0].message.content;
+  const text = await callGemini(userPrompt);
+  return text;
 }
 
+// This is the summary generation
 async function generateSummary(summaryData) {
-  /*
-    Expected summaryData example:
-    {
-      durationSec,
-      avgBpm,
-      avgDepth,
-      elbowsLockedPercent,
-      fatigueDetected,
-      totalCompressions
-    }
-  */
-
   const userPrompt = `
+${SYSTEM_PROMPT}
+
 You are reviewing a CPR training session.
 
 Session Stats:
-- Duration: ${summaryData.durationSec} seconds
-- Total compressions: ${summaryData.totalCompressions}
-- Average rate (BPM): ${summaryData.avgBpm}
-- Average depth: ${summaryData.avgDepth}
-- Elbows locked percentage: ${summaryData.elbowsLockedPercent}%
-- Fatigue detected: ${summaryData.fatigueDetected}
+- Duration: ${summaryData.duration || 0} seconds
+- Total compressions: ${summaryData.compressionCount || 0}
+- Average rate (BPM): ${summaryData.avgBPM || 0}
+- Average depth: ${summaryData.avgDepth || 0}
+- Elbows locked percentage: ${summaryData.elbowLockedPercent || 0}%
+- Fatigue detected: ${summaryData.fatigueDetected || 'No'}
 
 Provide:
 1. Overall performance assessment
@@ -76,35 +71,27 @@ Provide:
 Keep it concise, structured, and professional.
 `;
 
-  const completion = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
-    messages: [
-      { role: "system", content: SYSTEM_PROMPT },
-      { role: "user", content: userPrompt },
-    ],
-    temperature: 0.7,
-  });
-
+  const text = await callGemini(userPrompt);
   return {
     type: "summary",
-    text: completion.choices[0].message.content,
+    text,
   };
 }
 
-
 async function answerQuestion(question) {
-  const completion = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
-    messages: [
-      { role: "system", content: SYSTEM_PROMPT },
-      { role: "user", content: question },
-    ],
-    temperature: 0.7,
-  });
+  const userPrompt = `
+${SYSTEM_PROMPT}
 
+Learner question:
+"${question}"
+
+Answer briefly, in 1–3 sentences, focused on CPR compressions and technique.
+`;
+
+  const text = await callGemini(userPrompt);
   return {
     type: "voiceReply",
-    text: completion.choices[0].message.content,
+    text,
   };
 }
 
