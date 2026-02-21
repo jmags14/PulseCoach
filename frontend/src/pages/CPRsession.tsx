@@ -1,84 +1,77 @@
-import { useState, useRef, useEffect } from 'react';
-import PoseCamera from '../components/PoseCamera';
-import { CPREngine } from '../logic/CPRengine';
+import { useState, useRef, useEffect } from "react";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import PoseCamera from "../components/PoseCamera";
+import MetricCard from "../components/MetricCard";
+import { CPREngine } from "../logic/CPRengine";
 import { AudioManager } from "../logic/audioManager";
-import { useWebSocket } from '../logic/useWebSocket';
-//import audio stuff
+import { useWebSocket } from "../logic/useWebSocket";
 import { startMetronome, stopMetronome } from "../audio/script";
-import { startTutorial, pauseTutorial, resumeTutorial, replayTutorial } from "../audio/tts";
-//import './App.css';
+import { startTutorial } from "../audio/tts";
+import "../styles/CPRsession.css";
 
 type Metrics = {
   bpm: number;
   relativeDepth: number;
   elbowsLocked: boolean;
   compressionCount?: number;
-  //feedback?: string;
 };
 
-type Summary = {
-  text: string;
-  stats?: {
-    avgBPM?: number;
-    avgDepth?: number;
-    elbowLockedPercent?: number;
-    duration?: number;
-  };
-};
+export default function CPRsession() {
+  const navigate = useNavigate();
+  const { mode: modeParam } = useParams<{ mode: string }>();
+  const [searchParams] = useSearchParams();
+  const song = searchParams.get("song");
 
-function CPRsession() {
-  //UI state
+  // Lock mode from URL param, fall back to train
+  const mode = (modeParam === "test" ? "test" : "train") as "train" | "test";
+
+  // UI state
   const [cameraOn, setCameraOn] = useState(false);
   const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [readyToStart, setReadyToStart] = useState(false);
-  const [mode, setMode] = useState<"train" | "test">("train");  //add for modes section
-  const [summary, setSummary] = useState<Summary | null>(null);
-  //const [highlightColor, setHighlightColor] = useState<string | null>(null);
   const [triggerFeedback, setTriggerFeedback] = useState<string | null>(null);
+  const [voiceActive, setVoiceActive] = useState(false);
+  const [caption, setCaption] = useState<string>("");
 
-  //cpr logic and timming
+  // CPR logic
   const engineRef = useRef(new CPREngine());
   const lastSentRef = useRef(0);
   const sessionStartedRef = useRef(false);
 
-  // connect to backend AI WebSocket
- const { connected, messages, sendMessage} = useWebSocket("http://localhost:8080");
+  // Audio state refs
+  const audioStartedRef = useRef(false);
+  const tutorialDoneRef = useRef(false); // track if TTS has finished or been skipped
 
-  //tts and audio
+  // WebSocket
+  const { connected, messages, sendMessage } = useWebSocket("http://localhost:8080");
+
+  // Audio manager (voice commands)
   const lastSpokenRef = useRef<string | null>(null);
   const lastSpokenTimeRef = useRef(0);
   const audioRef = useRef<AudioManager | null>(null);
-  const [voiceActive, setVoiceActive] = useState(false);
 
   const speakFeedback = (text: string, force = false) => {
     if (!cameraOn && !force) return;
-
-    // Only speak if feedback changed
     if (lastSpokenRef.current === text) return;
-
-    //limit to TTS can trigger ever 4 seconds
     const now = performance.now();
     if (now - lastSpokenTimeRef.current < 4000) return;
     lastSpokenTimeRef.current = now;
     lastSpokenRef.current = text;
-
     const utterance = new SpeechSynthesisUtterance(text);
     window.speechSynthesis.speak(utterance);
   };
 
-
-  //called every frame and process the pose to calcuate metrics
+  // Handle pose detection
   const handlePose = (coords: any[]) => {
     if (!coords) return;
     const result = engineRef.current.processFrame(coords);
     const isReady = engineRef.current.isInStartPosition(coords);
     setReadyToStart(isReady);
-    
+
     if (!result) return;
 
-    // send metrics to backend every second or so
     const now = performance.now();
-    if (now - lastSentRef.current > 1000) { // 1 second
+    if (now - lastSentRef.current > 1000) {
       sendMessage("metrics", {
         timestamp: Date.now(),
         ready: isReady,
@@ -87,22 +80,43 @@ function CPRsession() {
       });
       lastSentRef.current = now;
     }
-    setMetrics(result); 
-    // Say start message only once
-    /*if (isReady && !compressionStartedRef.current) {
-      speakFeedback("Good position, start compressions");
-      compressionStartedRef.current = true;
+
+    setMetrics(result);
+
+    // Start metronome as soon as user is in position (training mode only)
+    if (mode === "train" && isReady && !audioStartedRef.current) {
+        audioStartedRef.current = true;
+
+        // If TTS is still going, cancel it — metronome takes priority
+        if (!tutorialDoneRef.current) {
+            window.speechSynthesis.cancel();
+            tutorialDoneRef.current = true;
+            setCaption("");
+        }
+
+        if (song === "beat_only") {
+            startMetronome(110);
+        } else {
+            // play the actual song file
+            // e.g. new Audio(`/songs/${song}.mp3`).play();
+        }
     }
 
-    // Update metrics every frame
-    if (result) {
-      setMetrics(result);
-      speakFeedback(result.feedback);
+    // If user leaves position, stop metronome
+    /*if (!isReady && metronomeRunningRef.current) {
+      metronomeRunningRef.current = false;
+      stopMetronome();
     }*/
 
+    // Backend session start
+    if (!connected) return;
+    if (isReady && !sessionStartedRef.current) {
+      sendMessage("startSession", { mode });
+      sessionStartedRef.current = true;
+    }
   };
 
-  //for audio set up
+  // Initialize audio manager
   useEffect(() => {
     audioRef.current = new AudioManager({
       onTranscript: (text: string) => {
@@ -110,131 +124,138 @@ function CPRsession() {
           setVoiceActive(false);
           return;
         }
-
-        // send to backend through your existing WebSocket
-        sendMessage("voiceCommand", {
-          text,
-          timestamp: Date.now(),
-        });
+        sendMessage("voiceCommand", { text, timestamp: Date.now() });
       },
     });
   }, []);
 
+  // When camera turns on → start TTS tutorial (training mode only)
   useEffect(() => {
-    if (!connected) return;
-    if (cameraOn) {
-      setSummary(null); //reset session if new
-      if (readyToStart && !sessionStartedRef.current){
-      sendMessage("startSession", { mode });
-      sessionStartedRef.current = true;        
-      }
-    }
-    
-    if(!cameraOn){
-      sendMessage("stopSession", {});
+    if (!cameraOn) {
+      // Camera off: stop everything
+      stopMetronome();
+      window.speechSynthesis.cancel();
+      audioStartedRef.current = false;
+      tutorialDoneRef.current = false;
       sessionStartedRef.current = false;
+      setCaption("");
+      if (connected) sendMessage("stopSession", {});
+      return;
     }
-  }, [cameraOn, readyToStart, connected]);
 
-  // handle messages from AI/backend
+    // Camera just turned on
+    if (mode === "train") {
+      // Start TTS tutorial immediately
+      tutorialDoneRef.current = false;
+      startTutorial((text: string) => {
+        setCaption(text);
+        // Mark tutorial done when last step finishes
+        // tts.ts calls onend for each step; the final step will hit the
+        // `currentStep >= steps.length` guard — we detect done by caption clearing
+      });
+
+      // Mark tutorial as done after its expected duration (or let position trigger stop it)
+      // We rely on position detection to cancel TTS when user is ready
+    }
+  }, [cameraOn]);
+
+  // Handle backend messages
   useEffect(() => {
     if (messages.length === 0) return;
     const msg = messages[messages.length - 1];
 
     if (msg.type === "feedback" && msg.text) {
-      // play TTS
       setTriggerFeedback(msg.text);
       speakFeedback(msg.text);
-      //setHighlightColor(msg.highlightColor || null);
-
-      // optionally duck music or highlight skeleton
-      if (msg.duckMusic) {
-        console.log("Lower music volume temporarily");
-      }
     }
 
     if (msg.type === "summary") {
-      setSummary({
-        text: msg.text || "No summary available",
-        stats: msg.stats,
-      });
-      speakFeedback(msg.text || "No summary available", true);
+      navigate("/results", { state: { metrics } });
     }
 
     if (msg.type === "voiceReply" && msg.text) {
-      speakFeedback(msg.text, true);    
+      speakFeedback(msg.text, true);
     }
-  }, [messages]);
+  }, [messages, navigate, metrics]);
+
+  const handleEndSession = () => {
+    stopMetronome();
+    window.speechSynthesis.cancel();
+    audioStartedRef.current = false;
+    setCameraOn(false);
+    navigate("/results", { state: { metrics } });
+  };
+
+  const bpmInRange = metrics?.bpm !== undefined && metrics.bpm >= 100 && metrics.bpm <= 120;
+  const elbowsLocked = metrics?.elbowsLocked ?? false;
 
   return (
-    <div>
-      <button onClick={() => setCameraOn((prev) => !prev)}>
-        {cameraOn ? "Stop Camera" : "Start Camera"}
-      </button>
+    <div className="session-container">
+      {/* Fullscreen Camera */}
+      <div className="camera-section">
+        <PoseCamera
+          running={cameraOn}
+          onPoseDetected={handlePose}
+          ready={readyToStart}
+        />
+      </div>
 
-      <button
-        onClick={() =>
-          setMode((prev) => (prev === "train" ? "test" : "train"))
-        }
-      >
-        Mode: {mode.toUpperCase()}
-      </button>
-
-      <button
-        onClick={() => {
-          if (!voiceActive) {
-            audioRef.current?.start();
-            setVoiceActive(true);
-          } else {
-            audioRef.current?.stop();
-            setVoiceActive(false);
-          }
-        }}
-      >
-        {voiceActive ? "End Voice" : "Ask Question"}
-      </button>
-
-
-      <PoseCamera
-        running={cameraOn}
-        onPoseDetected={handlePose}
-        ready={readyToStart}
-      />
-      {triggerFeedback && (
-        <div>
-          <h2>Feedback: {triggerFeedback}</h2>
+      {/* TTS caption overlay — bottom center */}
+      {caption && (
+        <div className="caption-overlay">
+          {caption}
         </div>
       )}
 
-      {metrics && (
-        <div>
-            <h2>Live Metrics</h2>
-            <h2>BPM: {metrics.bpm}</h2>
-            <h2>Elbows Locked: {metrics.elbowsLocked ? "Yes" : "No"}</h2>
-            {/*<h2>Feedback: {metrics.feedback || "..."}</h2>*/}
+      {/* Ready indicator overlay */}
+      {cameraOn && (
+        <div className={`ready-indicator ${readyToStart ? "ready" : "not-ready"}`}>
+          {readyToStart ? "✓ In Position" : "Get into position"}
         </div>
       )}
 
-      {summary ? (
-        <div style={{ marginTop: "20px", padding: "15px", border: "2px solid green" }}>
-          <h2>Session Summary</h2>
-          <p>{summary.text}</p>
+      {/* Overlay Controls + Metrics */}
+      <div className="controls-section">
+        <h2>{mode === "train" ? "Training Mode" : "Testing Mode"}</h2>
 
-          {summary.stats && (
-            <>
-              <p>Avg BPM: {summary.stats.avgBPM?.toFixed(0)}</p>
-              <p>Elbows Locked: {summary.stats.elbowLockedPercent?.toFixed(0)}%</p>
-              <p>Duration: {summary.stats.duration?.toFixed(1)}s</p>
-            </>
+        <button
+          className={cameraOn ? "end-btn" : "start-btn"}
+          onClick={() => {
+            if (!cameraOn) setCameraOn(true);
+            else handleEndSession();
+          }}
+        >
+          {cameraOn ? "End Session" : "Start Session"}
+        </button>
+
+        {/* Voice button — only useful in train mode */}
+        {mode === "train" && (
+          <button
+            onClick={() => {
+              if (!voiceActive) {
+                audioRef.current?.start();
+                setVoiceActive(true);
+              } else {
+                audioRef.current?.stop();
+                setVoiceActive(false);
+              }
+            }}
+          >
+            {voiceActive ? "🎙 End Voice" : "🎙 Ask Question"}
+          </button>
+        )}
+
+        <div className="metrics-grid">
+          <MetricCard label="BPM" value={metrics?.bpm ?? "--"} highlight={bpmInRange} />
+          <MetricCard label="Elbows Locked" value={elbowsLocked ? "Yes" : "No"} highlight={elbowsLocked} />
+          <MetricCard label="Depth" value={metrics?.relativeDepth ?? "--"} />
+          {metrics?.compressionCount !== undefined && (
+            <MetricCard label="Compressions" value={metrics.compressionCount} />
           )}
         </div>
-      ) : (
-        <div style={{ marginTop: "20px", padding: "15px", border: "2px solid red" }}>
-          <h2>No Session Data</h2>
-          <p>No data was received for this session.</p>
-        </div>
-      )}
+
+        {triggerFeedback && <div className="feedback">💬 {triggerFeedback}</div>}
+      </div>
     </div>
   );
 }
-export default CPRsession
