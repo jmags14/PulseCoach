@@ -1,54 +1,46 @@
 import { useEffect, useRef, useState, useCallback } from "react";
+import { io, Socket } from "socket.io-client";
 
-type WebSocketMessage = {
-  type: string; // e.g., 'feedback', 'summary'
+type ServerMessage = {
+  type: string;
   text?: string;
   duckMusic?: boolean;
   highlightColor?: string;
-  metrics?: any;
+  stats?: any;
 };
 
 export function useWebSocket(url: string) {
-  const wsRef = useRef<WebSocket | null>(null);
+  const socketRef = useRef<Socket | null>(null);
   const [connected, setConnected] = useState(false);
-  const [messages, setMessages] = useState<WebSocketMessage[]>([]);
-
-  const sendMessage = useCallback((msg: any) => {
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify(msg));
-    }
-  }, []);
+  const [messages, setMessages] = useState<ServerMessage[]>([]);
 
   useEffect(() => {
-    wsRef.current = new WebSocket(url);
+    const socket = io(url);
+    socketRef.current = socket;
 
-    wsRef.current.onopen = () => {
-      console.log("WebSocket connected");
+    socket.on("connect", () => {
+      console.log("Connected:", socket.id);
       setConnected(true);
-    };
+    });
 
-    wsRef.current.onclose = () => {
-      console.log("WebSocket disconnected");
+    socket.on("disconnect", () => {
+      console.log("Disconnected");
       setConnected(false);
-    };
+    });
 
-    wsRef.current.onerror = (err) => {
-      console.error("WebSocket error:", err);
-    };
-
-    wsRef.current.onmessage = (event) => {
-      try {
-        const data: WebSocketMessage = JSON.parse(event.data);
-        setMessages((prev) => [...prev, data]);
-      } catch (e) {
-        console.error("Invalid JSON:", event.data);
-      }
-    };
+    // Unified AI response channel
+    socket.on("ai_response", (data: ServerMessage) => {
+      setMessages((prev) => [...prev, data]);
+    });
 
     return () => {
-      wsRef.current?.close();
+      socket.disconnect();
     };
   }, [url]);
+
+  const sendMessage = useCallback((event: string, payload: any) => {
+    socketRef.current?.emit(event, payload);
+  }, []);
 
   return { connected, messages, sendMessage };
 }
