@@ -1,0 +1,29 @@
+/* Make the home page full viewport */
+.home {
+  height: 100vh;          /* full viewport height */
+  width: 100vw;           /* full viewport width */
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* vertically center content */
+  align-items: center;     /* horizontally center content */
+  background-color: #030915; /* dark background */
+  overflow: hidden;        /* prevents scrollbars from accidental overflow */
+}
+
+/* Neon button */
+.start-btn {
+  margin-top: 40px;
+  padding: 14px 32px;
+  font-size: 18px;
+  border: none;
+  border-radius: 8px;
+  color: #00eaff;
+  background: #001a2e;
+  cursor: pointer;
+  box-shadow: 0 0 10px #00eaff;
+  transition: 0.3s ease;
+}
+
+.start-btn:hover {
+  box-shadow: 0 0 20px #00eaff, 0 0 40px #009fff;
+}

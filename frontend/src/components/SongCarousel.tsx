@@ -1,6 +1,6 @@
 import { useState } from "react";
 import "../styles/SongCarousel.css";
-import beatOnlyImg from "../assets/crazyinlove.png";
+import beatOnlyImg from "../assets/ticking.jpg";
 import stayingAliveImg from "../assets/stayinalive.jpg";
 import dancingQueenImg from "../assets/dancingqueen.png";
 import crazyLoveImg from "../assets/crazyinlove.png";
@@ -68,6 +68,8 @@ export default function SongCarousel({ selected, onSelect }: Props) {
               <img src={song.img} alt={song.name} />
               <div className="song-info">
                 <div className="song-name">{song.name}</div>
+                <div className="song-name">{song.artist}</div>
+
               </div>
             </div>
           );
