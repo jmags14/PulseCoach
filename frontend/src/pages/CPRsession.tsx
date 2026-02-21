@@ -3,6 +3,9 @@ import PoseCamera from '../components/PoseCamera';
 import { CPREngine } from '../logic/CPRengine';
 import { AudioManager } from "../logic/audioManager";
 import { useWebSocket } from '../logic/useWebSocket';
+//import audio stuff
+import { startMetronome, stopMetronome } from "../audio/script";
+import { startTutorial, pauseTutorial, resumeTutorial, replayTutorial } from "../audio/tts";
 //import './App.css';
 
 type Metrics = {
