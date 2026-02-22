@@ -53,7 +53,7 @@ const SONG_DISPLAY: Record<string, string> = {
 
 function songLabel(id?: string): string {
   if (!id) return "—";
-  return SONG_DISPLAY[id] ?? id;
+  return SONG_DISPLAY[id] ?? "";
 }
 
 function formatDuration(secs: number): string {
