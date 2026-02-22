@@ -23,7 +23,7 @@ async function computeSummary(session) {
   const avg = (arr) => arr.reduce((a, b) => a + b, 0) / arr.length;
   const avgBPM = avg(metrics.map((m) => m.bpm));
   const elbowLockedPercent = (metrics.filter((m) => m.elbowsLocked).length / metrics.length) * 100;
-  const compressionCount = metrics[metrics.length - 1].compressionCount;
+  const compressionCount = metrics.filter((m) => m.compressionCount > 0).length; 
   const score = computeScore(avgBPM, elbowLockedPercent);
   const now = new Date();
 

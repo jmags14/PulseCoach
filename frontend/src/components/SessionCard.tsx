@@ -45,12 +45,6 @@ function SessionCard({ session }: { session: Session }) {
           <span className="stat-label">Duration</span>
           <span className="stat-value">{durationStr}</span>
         </div>
-        {session.score !== undefined && (
-          <div className="stat">
-            <span className="stat-label">Score</span>
-            <span className="stat-value score">{session.score}%</span>
-          </div>
-        )}
       </div>
     </div>
   );

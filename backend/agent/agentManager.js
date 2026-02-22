@@ -153,8 +153,6 @@ class AgentManager {
   }
 }
 
-
-  
   async endSession() {
   if (!this.session.active) return;
   
@@ -187,6 +185,6 @@ class AgentManager {
     this.resetSession();
   }
 }
-
+}
 
 module.exports = { AgentManager };
