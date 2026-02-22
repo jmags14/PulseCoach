@@ -1,3 +1,4 @@
+// Dashboard.tsx
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import crazyInLove from "../assets/crazyinlove.png";
@@ -72,11 +73,11 @@ function formatDateTime(date: string, time: string): string {
 function SessionCard({ session }: { session: Session }) {
   const isTest = session.mode === "test";
   const stats = [
-  { icon: "❤️", label: "Avg BPM",      value: `${Math.round(session.avgBPM)}` },
-  { icon: "✊", label: "Compressions", value: `${Math.round(session.compressionCount)}` },
-  { icon: "💪", label: "Elbow Lock",   value: `${Math.round(session.elbowLockedPercent)}%` },
-  { icon: "⏱",  label: "Duration",     value: formatDuration(Math.round(session.duration)) },
-];
+    { icon: "❤️", label: "Avg BPM",      value: `${Math.round(session.avgBPM)}` },
+    { icon: "✊", label: "Compressions", value: `${Math.round(session.compressionCount)}` },
+    { icon: "💪", label: "Elbow Lock",   value: `${Math.round(session.elbowLockedPercent)}%` },
+    { icon: "⏱", label: "Duration",     value: formatDuration(Math.round(session.duration)) },
+  ];
 
   return (
     <div className="sc-card">
@@ -90,8 +91,8 @@ function SessionCard({ session }: { session: Session }) {
         <div className="sc-header-right">
           {session.score !== undefined && (
             <span className="sc-score">
-            {Math.round(session.score)}<span className="sc-score-max">/100</span>
-          </span>
+              {Math.round(session.score)}<span className="sc-score-max">/100</span>
+            </span>
           )}
           <span className="sc-date">{formatDateTime(session.date, session.time)}</span>
         </div>
@@ -133,7 +134,6 @@ export default function Dashboard() {
     fetch("http://localhost:8080/api/sessions")
       .then((res) => res.json())
       .then((data) => {
-        // MongoDB returns _id — map it to id for the component
         const mapped = data.map((s: any) => ({ ...s, id: s._id }));
         setSessions(mapped);
       })
@@ -166,13 +166,56 @@ export default function Dashboard() {
   return (
     <>
       <style>{css}</style>
-      <div className="db-container">
 
+      {/* ── NAVBAR ── */}
+      <nav className="home-nav">
+        <div className="home-nav-logo">
+          <button
+            type="button"
+            className="home-logo-link"
+            onClick={() => navigate("/#hero")}
+            aria-label="Go to PulseCoach home"
+          >
+            <span className="home-logo-pulse">Pulse</span>
+            <span className="home-logo-coach">Coach</span>
+          </button>
+        </div>
+
+        <div className="home-nav-links">
+          <button
+            type="button"
+            className="home-dashboard-link"
+            onClick={() => navigate("/#purpose")}
+          >
+            Why PulseCoach
+          </button>
+
+          <button
+            type="button"
+            className="home-dashboard-link home-dashboard-link--active"
+            onClick={() => navigate("/dashboard")}
+          >
+            Dashboard
+          </button>
+
+          <button
+            type="button"
+            className="home-dashboard-link"
+            onClick={() => navigate("/#disclaimer")}
+          >
+            Disclaimer
+          </button>
+        </div>
+      </nav>
+
+      <div className="db-container">
         {/* ── SONG PANEL ── */}
         <section className="db-song-panel">
           <h2 className="db-heading">Select Song</h2>
           <div className="db-carousel-row">
-            <button className="db-arrow" onClick={prev} aria-label="Previous">&#9664;</button>
+            <button className="db-arrow" onClick={prev} aria-label="Previous">
+              &#9664;
+            </button>
             <div className="db-track">
               {visibleSongs.map((song, i) => (
                 <div
@@ -188,7 +231,9 @@ export default function Dashboard() {
                 </div>
               ))}
             </div>
-            <button className="db-arrow" onClick={next} aria-label="Next">&#9654;</button>
+            <button className="db-arrow" onClick={next} aria-label="Next">
+              &#9654;
+            </button>
           </div>
         </section>
 
@@ -248,7 +293,9 @@ export default function Dashboard() {
 
         {/* ── PAST SESSIONS ── */}
         <section className="db-sessions">
-          <h2 className="db-heading" style={{ textAlign: "left", marginBottom: "20px" }}>Past Sessions</h2>
+          <h2 className="db-heading" style={{ textAlign: "left", marginBottom: "20px" }}>
+            Past Sessions
+          </h2>
           {loading ? (
             <p className="db-empty">Loading sessions...</p>
           ) : sessions.length === 0 ? (
@@ -261,7 +308,6 @@ export default function Dashboard() {
             </div>
           )}
         </section>
-
       </div>
     </>
   );
@@ -296,9 +342,65 @@ body {
   min-height: 100vh;
 }
 
+/* ── NAVBAR (same feel as Home) ── */
+.home-nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 40px;
+  background: rgba(0,0,0,0.85);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.home-nav-logo {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.home-logo-link {
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  gap: 2px;
+  align-items: center;
+}
+
+.home-logo-pulse { color: var(--db-cyan); }
+.home-logo-coach { color: var(--db-text); }
+
+.home-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+}
+
+/* reuse the same button style for nav actions */
+.home-dashboard-link {
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: rgba(255,255,255,0.8);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color var(--db-ease);
+}
+.home-dashboard-link:hover { color: var(--db-cyan); }
+.home-dashboard-link--active { color: #fff; }
+
+/* layout spacing under fixed navbar */
 .db-container {
   min-height: 100vh;
-  padding: 36px 40px 60px;
+  padding: 110px 40px 60px; /* ✅ added top padding for navbar */
   display: flex;
   flex-direction: column;
   gap: 36px;
@@ -711,7 +813,10 @@ body {
 }
 
 @media (max-width: 768px) {
-  .db-container { padding: 20px 16px 48px; }
+  .home-nav { padding: 16px 20px; }
+  .home-nav-links { gap: 18px; }
+
+  .db-container { padding: 96px 16px 48px; }
   .db-desc-grid { grid-template-columns: 1fr; }
   .db-toggle { flex-direction: column; align-items: center; }
   .sc-grid { grid-template-columns: 1fr; }
