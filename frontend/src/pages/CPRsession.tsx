@@ -184,6 +184,16 @@ export default function CPRsession() {
     if (messages.length === 0) return;
     const msg = messages[messages.length - 1];
 
+    if (songAudioRef.current) {
+      if (msg.duckMusic === true) {
+        // Lower volume while AI speaks
+        songAudioRef.current.volume = 0.2; // ducked level
+      } else {
+        // Restore volume when AI not speaking
+        songAudioRef.current.volume = 1.0; // normal level
+      }
+    }
+
     if (msg.type === "feedback" && msg.text) {
       setTriggerFeedback(msg.text);
     }
