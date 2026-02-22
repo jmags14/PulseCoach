@@ -57,6 +57,26 @@ export default function CPRsession() {
   // Audio manager (voice commands)
   const audioRef = useRef<AudioManager | null>(null);
 
+  const speakWithDucking = (text: string) => {
+    if(!text) return;
+
+    // duck music
+    if(songAudioRef.current) {
+      songAudioRef.current.volume = 0.2; // lowered volume
+    }
+
+    const utterance = new SpeechSynthesisUtterance(text);
+
+    utterance.onend = () => {
+      // restore volume
+      if(songAudioRef.current) {
+        songAudioRef.current.volume = 1.0;
+      }
+    };
+
+    window.speechSynthesis.speak(utterance);
+  };
+
   // Handle pose detection
   const handlePose = (coords: any[]) => {
     if (!coords) return;
@@ -196,6 +216,9 @@ export default function CPRsession() {
 
     if (msg.type === "feedback" && msg.text) {
       setTriggerFeedback(msg.text);
+
+      // speak + duck music
+      speakWithDucking(msg.text);
     }
 
     if (msg.type === "summary") {
