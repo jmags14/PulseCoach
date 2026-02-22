@@ -38,7 +38,7 @@ function evaluateTriggers(metrics, mode, allMetrics) {
       issue: "elbows_bent",
       text: "Lock your elbows",
       color: "red",
-      priority: 4,
+      priority: 1,
     });
   }
 

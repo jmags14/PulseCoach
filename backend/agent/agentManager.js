@@ -1,7 +1,8 @@
 // Stores the client's socket so it can send messages bacj to the frontend :D!!
-
+//const axios = require("axios"); 
 const { textToSpeech } = require('./ttsElevenLabs');
 const { evaluateTriggers } = require("./triggerEngine");
+//const { Session } = require("../models/Session"); // Ensure the Session model is imported
 const { computeSummary } = require("./summaryEngine");
 const {
   generateLiveFeedback,
@@ -134,30 +135,22 @@ class AgentManager {
       console.error("TTS error:", err.message);
     }
   }
-
   
   async endSession() {
     if (!this.session.active) return;
     try { // Uncommented after applying gemini
-      // Step 1: Deterministic summary
-      const rawSummary = computeSummary(this.session);
-
-      // Step 2: LLM converts into instructor-style feedback
-      const formatted = await generateSummary(rawSummary);
-
-      this.socket.emit("ai_response", formatted);
+      const summary = await computeSummary(this.session);  // DB save happens in here
+      this.socket.emit("summary", summary);
+      
+      // LLM converts into instructor-style feedback
+      //const formatted = await generateSummary(rawSummary);
+      //this.socket.emit("ai_response", formatted);
 
     } catch (err) {
       console.error("LLM summary error:", err);
-
-      // Fallback to raw deterministic summary
-      this.socket.emit("ai_response", {
-        type: "summary",
-        text: "Session complete. Review your compression consistency and technique.",
-      });
+    } finally{
+      this.resetSession();
     }
-
-    this.resetSession();
   }
 }
 
