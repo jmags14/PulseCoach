@@ -12,17 +12,29 @@ type Metrics = {
   compressionCount?: number;
 };
 
+type SummaryStats = {
+  avgBPM?: number;
+  compressionCount?: number;
+};
+
 export default function Results() {
   const navigate = useNavigate();
-  const locationState = useLocation().state as { metrics?: Metrics } | undefined;
+  const locationState = useLocation().state as { metrics?: Metrics; summaryStats?: SummaryStats } | undefined;
   const metrics = locationState?.metrics;
-  const bpmInRange = metrics?.bpm !== undefined && metrics.bpm >= 100 && metrics.bpm <= 120;
+  const summaryStats = locationState?.summaryStats;
+
+  console.log("Received metrics:", JSON.stringify(metrics, null, 2)); // delete if needed man
+  console.table(metrics);
+
+  const displayedBpm = summaryStats?.avgBPM ?? metrics?.bpm;
+  const displayedCompressionCount = summaryStats?.compressionCount ?? metrics?.compressionCount;
+  const bpmInRange = displayedBpm !== undefined && displayedBpm >= 100 && displayedBpm <= 120;
   const elbowsLocked = metrics?.elbowsLocked ?? false;
 
   const [voiceActive, setVoiceActive] = useState(false);
   const audioRef = useRef<AudioManager | null>(null);
 
-const { connected, messages, sendMessage } = useWebSocket("http://localhost:8080");
+const { sendMessage } = useWebSocket("http://localhost:8080");
   
   
   useEffect(() => {
@@ -44,9 +56,9 @@ const { connected, messages, sendMessage } = useWebSocket("http://localhost:8080
           <h1>Session Summary</h1>
 
           <div className="metrics-grid">
-            <MetricCard label="BPM" value={metrics?.bpm ?? "--"} highlight={bpmInRange} />
+            <MetricCard label="BPM" value={displayedBpm !== undefined ? Math.round(displayedBpm) : "--"} highlight={bpmInRange} />
             <MetricCard label="Elbows Locked" value={elbowsLocked ? "Yes" : "No"} highlight={elbowsLocked} />
-            <MetricCard label="Compressions" value={metrics?.compressionCount ?? "--"} />
+            <MetricCard label="Compressions" value={displayedCompressionCount ?? "--"} />
           </div>
         </>
       ) : (

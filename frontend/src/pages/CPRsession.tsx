@@ -22,6 +22,14 @@ type Metrics = {
   compressionCount?: number;
 };
 
+type SummaryStats = {
+  avgBPM?: number;
+  compressionCount?: number;
+  elbowLockedPercent?: number;
+  duration?: number;
+  score?: number;
+};
+
 export default function CPRsession() {
   const navigate = useNavigate();
   const { mode: modeParam } = useParams<{ mode: string }>();
@@ -43,6 +51,8 @@ export default function CPRsession() {
   const engineRef = useRef(new CPREngine());
   const lastSentRef = useRef(0);
   const sessionStartedRef = useRef(false);
+  const endingSessionRef = useRef(false);
+  const fallbackNavTimerRef = useRef<number | null>(null);
 
   // Audio state refs
   const audioStartedRef = useRef(false);
@@ -179,7 +189,6 @@ export default function CPRsession() {
       tutorialDoneRef.current = false;
       sessionStartedRef.current = false;
       setCaption("");
-      if (connected) sendMessage("stopSession", {});
       return;
     }
 
@@ -222,7 +231,14 @@ export default function CPRsession() {
     }
 
     if (msg.type === "summary") {
-      navigate("/results", { state: { metrics } });
+      if (fallbackNavTimerRef.current) {
+        window.clearTimeout(fallbackNavTimerRef.current);
+        fallbackNavTimerRef.current = null;
+      }
+
+      const summaryStats = (msg.stats ?? {}) as SummaryStats;
+      navigate("/results", { state: { metrics, summaryStats } });
+      endingSessionRef.current = false;
     }
 
     if (msg.type === "voiceReply" && msg.text) {
@@ -246,10 +262,33 @@ export default function CPRsession() {
 
     window.speechSynthesis.cancel();
     audioStartedRef.current = false;
-    setCameraOn(false);
+    endingSessionRef.current = true;
 
-    navigate("/results", { state: { metrics } });
+    if (connected) {
+      sendMessage("stopSession", {});
+    }
+
+    if (fallbackNavTimerRef.current) {
+      window.clearTimeout(fallbackNavTimerRef.current);
+    }
+
+    fallbackNavTimerRef.current = window.setTimeout(() => {
+      if (endingSessionRef.current) {
+        navigate("/results", { state: { metrics } });
+        endingSessionRef.current = false;
+      }
+    }, 2000);
+
+    setCameraOn(false);
   };
+
+  useEffect(() => {
+    return () => {
+      if (fallbackNavTimerRef.current) {
+        window.clearTimeout(fallbackNavTimerRef.current);
+      }
+    };
+  }, []);
 
   const bpmInRange = metrics?.bpm !== undefined && metrics.bpm >= 100 && metrics.bpm <= 120;
   const elbowsLocked = metrics?.elbowsLocked ?? false;

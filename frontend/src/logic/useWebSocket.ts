@@ -34,6 +34,10 @@ export function useWebSocket(url: string) {
       setMessages((prev) => [...prev, data]);
     });
 
+    socket.on("summary", (data: ServerMessage) => {
+      setMessages((prev) => [...prev, data]);
+    });
+
     socket.on("voiceResponse", (data: any) => {
       if (!data.audio) return;
 

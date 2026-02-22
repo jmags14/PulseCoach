@@ -5,11 +5,13 @@ export type CPRMetrics = {
   relativeDepth: number;
   elbowsLocked: boolean;
   feedback: string;
+  compressionCount: number;
 };
 
 export class CPREngine {
   private lastYPositions: number[] = [];
   private compressionTimestamps: number[] = [];
+  private totalCompressionCount = 0;
   private lastDirection: "up" | "down" | null = null;
   private lastCompressionTime = 0;
   private sessionStarted = false;
@@ -20,11 +22,13 @@ export class CPREngine {
     if (!this.sessionStarted) {
       if (this.isInStartPosition(landmarks)) {
         this.sessionStarted = true;
+        this.totalCompressionCount = 0;
         return {
           bpm: 0,
           relativeDepth: 0,
           elbowsLocked: true,
           feedback: "Good position, start compressions",
+          compressionCount: 0,
         };
       } else {
         return {
@@ -32,6 +36,7 @@ export class CPREngine {
           relativeDepth: 0,
           elbowsLocked: false,
           feedback: "Get into proper position",
+          compressionCount: 0,
         };
       }
     }
@@ -77,6 +82,7 @@ export class CPREngine {
           now - this.lastCompressionTime > MIN_INTERVAL
         ) {
           this.compressionTimestamps.push(now);
+          this.totalCompressionCount += 1;
           this.lastCompressionTime = now;
         }
       }
@@ -146,6 +152,7 @@ export class CPREngine {
         relativeDepth ,
         elbowsLocked,
         feedback: "",
+        compressionCount: this.totalCompressionCount,
       };
     }
 
@@ -162,6 +169,7 @@ export class CPREngine {
       relativeDepth ,
       elbowsLocked,
       feedback,
+      compressionCount: this.totalCompressionCount,
     };
   }
 

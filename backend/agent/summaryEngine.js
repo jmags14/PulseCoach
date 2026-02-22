@@ -21,9 +21,15 @@ async function computeSummary(session) {
   }
 
   const avg = (arr) => arr.reduce((a, b) => a + b, 0) / arr.length;
-  const avgBPM = avg(metrics.map((m) => m.bpm));
+  const bpmSamples = metrics
+    .map((m) => m.bpm)
+    .filter((bpm) => typeof bpm === "number" && bpm > 0);
+  const avgBPM = bpmSamples.length > 0 ? avg(bpmSamples) : 0;
   const elbowLockedPercent = (metrics.filter((m) => m.elbowsLocked).length / metrics.length) * 100;
-  const compressionCount = metrics.filter((m) => m.compressionCount && m.compressionCount > 0).length;  
+  const compressionSamples = metrics
+    .map((m) => m.compressionCount)
+    .filter((count) => typeof count === "number" && count >= 0);
+  const compressionCount = compressionSamples.length > 0 ? Math.max(...compressionSamples) : 0;
   const score = computeScore(avgBPM, elbowLockedPercent);
   const now = new Date();
 
