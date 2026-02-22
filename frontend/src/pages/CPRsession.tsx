@@ -166,11 +166,11 @@ export default function CPRsession() {
 
   const handleEndSession = () => {
     stopMetronome();
+    window.speechSynthesis.cancel();
     if (songAudioRef.current) {
       songAudioRef.current.pause();
       songAudioRef.current.currentTime = 0;
     }
-    window.speechSynthesis.cancel();
     audioStartedRef.current = false;
     endingSessionRef.current = true;
 

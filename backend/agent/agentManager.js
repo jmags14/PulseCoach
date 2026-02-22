@@ -75,7 +75,7 @@ class AgentManager {
       now - this.coachingState.lastFeedbackTime >
       this.coachingState.cooldownMs;
 
-    if (!issueChanged && !cooldownPassed) return;
+    if (!issueChanged || !cooldownPassed) return;
     if (this.coachingState.llmBusy) return;
 
     try{ //if doesnt work then comment this out again

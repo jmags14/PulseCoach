@@ -41,7 +41,8 @@ Current metrics:
 - Depth: ${metrics.relativeDepth}
 - Elbows locked: ${metrics.elbowsLocked}
 
-Provide short corrective coaching.
+Provide short corrective coaching, One sentence or less be unique each time.
+If arms aren't straight thats should have priorty
 `;
 
   const text = await callGemini(userPrompt);
