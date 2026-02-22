@@ -24,6 +24,14 @@
   transition: 0.3s ease;
 }
 
+.home-logo-img {
+  height: 22px;        /* controls visual size */
+  width: auto;         /* keeps aspect ratio */
+  margin-left: 8px;
+  object-fit: contain;
+  display: inline-block;
+}
+
 .start-btn:hover {
   box-shadow: 0 0 20px #00eaff, 0 0 40px #009fff;
 }

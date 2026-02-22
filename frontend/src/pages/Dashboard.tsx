@@ -7,6 +7,7 @@ import espresso from "../assets/espresso.jpg";
 import everybodyWants from "../assets/everybodywantstoruletheworld.jpg";
 import stayinAlive from "../assets/stayinalive.jpg";
 import ticking from "../assets/ticking.jpg";
+import logo from "../assets/logo.png";
 
 type Mode = "train" | "test";
 
@@ -171,14 +172,20 @@ export default function Dashboard() {
       <nav className="home-nav">
         <div className="home-nav-logo">
           <button
-            type="button"
-            className="home-logo-link"
-            onClick={() => navigate("/#hero")}
-            aria-label="Go to PulseCoach home"
-          >
-            <span className="home-logo-pulse">Pulse</span>
-            <span className="home-logo-coach">Coach</span>
-          </button>
+              type="button"
+              className="home-logo-link"
+              onClick={() => navigate("/#hero")}
+              aria-label="Go to PulseCoach home"
+            >
+              <span className="home-logo-pulse">Pulse</span>
+              <span className="home-logo-coach">Coach</span>
+
+              <img
+                src={logo}
+                alt="PulseCoach logo"
+                className="home-logo-img"
+              />
+            </button>
         </div>
 
         <div className="home-nav-links">
@@ -812,6 +819,14 @@ body {
   transition: width 0.6s cubic-bezier(.4,0,.2,1);
 }
 
+.home-logo-img {
+  height: 22px;
+  width: 22px;
+  margin-left: 8px;
+  object-fit: contain;
+  display: inline-block;
+}
+  
 @media (max-width: 768px) {
   .home-nav { padding: 16px 20px; }
   .home-nav-links { gap: 18px; }

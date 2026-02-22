@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import Waveform from "../components/Waveform";
+import logo from "../assets/logo.png";
 
 export default function Home() {
   const navigate = useNavigate();
@@ -38,11 +39,18 @@ export default function Home() {
             <button
               type="button"
               className="home-logo-link"
-              onClick={() => scrollWithOffset("#hero")}
-              aria-label="Go to top"
+              onClick={() => navigate("/#hero")}
+              aria-label="Go to PulseCoach home"
             >
               <span className="home-logo-pulse">Pulse</span>
               <span className="home-logo-coach">Coach</span>
+
+              <img
+                src={logo}
+                alt="PulseCoach logo"
+                className="home-logo-img"
+  
+              />
             </button>
           </div>
 
@@ -491,6 +499,14 @@ body {
   color: rgba(255,255,255,0.22);
   text-transform: uppercase;
   letter-spacing: 0.08em;
+}
+
+.home-logo-img {
+  height: 22px;
+  width: 22px;
+  margin-left: 8px;
+  object-fit: contain;
+  display: inline-block;
 }
 
 /* ── Responsive ── */
