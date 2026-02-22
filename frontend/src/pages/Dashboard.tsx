@@ -33,11 +33,11 @@ interface Song {
 }
 
 const SONGS: Song[] = [
+  { id: "staying_alive",                     title: "Stayin' Alive",                     artist: "Bee Gees",          cover: stayinAlive },
   { id: "crazy_in_love",                     title: "Crazy in Love",                     artist: "Beyoncé",           cover: crazyInLove },
   { id: "dancing_queen",                     title: "Dancing Queen",                     artist: "ABBA",              cover: dancingQueen },
   { id: "espresso",                          title: "Espresso",                          artist: "Sabrina Carpenter", cover: espresso },
   { id: "everybody_wants_to_rule_the_world", title: "Everybody Wants to Rule the World", artist: "Tears for Fears",   cover: everybodyWants },
-  { id: "staying_alive",                     title: "Stayin' Alive",                     artist: "Bee Gees",          cover: stayinAlive },
   { id: "ticking",                           title: "Ticking",                           artist: "Metronome",         cover: ticking },
 ];
 

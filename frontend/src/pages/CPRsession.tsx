@@ -119,8 +119,8 @@ export default function CPRsession() {
           let audioSrc = stayinAlive; // default song
 
           if(song == "dancing_queen") audioSrc = dancingQueen;
-          else if(song === "rule_world") audioSrc = ruleWorld;
-          else if(song === "crazy_love") audioSrc = crazyLove;
+          else if(song === "everybody_wants_to_rule_the_world") audioSrc = ruleWorld;
+          else if(song === "crazy_in_love") audioSrc = crazyLove;
           else if(song === "espresso") audioSrc = espresso;
 
           // stop any previous audio
