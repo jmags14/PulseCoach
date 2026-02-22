@@ -3,15 +3,25 @@ function evaluateTriggers(metrics, mode, allMetrics) {
 
   const issues = [];
 
+  // --- ELBOW CHECK
+  if (!elbowsLocked) {
+    issues.push({
+      issue: "elbows_bent",
+      text: "Lock your elbows",
+      color: "red",
+      priority: 3,
+    });
+  }
+
   // --- RATE CHECK (with buffer to prevent flicker)
-  if (bpm < 99) {
+  if (bpm < 95) {
     issues.push({
       issue: "slow_rate",
       text: "Push faster",
       color: "green",
       priority: 2,
     });
-  } else if (bpm > 121) {
+  } else if (bpm > 125) {
     issues.push({
       issue: "fast_rate",
       text: "Slow down slightly",
@@ -30,15 +40,6 @@ function evaluateTriggers(metrics, mode, allMetrics) {
     });
   }*/
 
-  // --- ELBOW CHECK
-  if (!elbowsLocked) {
-    issues.push({
-      issue: "elbows_bent",
-      text: "Lock your elbows",
-      color: "red",
-      priority: 1,
-    });
-  }
 
   // --- FATIGUE DETECTION
   const fatigue = detectFatigue(allMetrics);

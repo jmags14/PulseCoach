@@ -27,8 +27,9 @@ class AgentManager {
     this.coachingState = {
       lastIssue: null,
       lastFeedbackTime: 0,
-      cooldownMs: 5000, // 5 seconds
+      cooldownMs: 8000, // 8 seconds
       llmBusy: false,   // prevents overlapping LLM calls
+      voiceCooldownUntil: 0
     };
   }
 
