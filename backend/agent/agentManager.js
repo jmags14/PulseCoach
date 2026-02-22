@@ -1,7 +1,8 @@
 // Stores the client's socket so it can send messages bacj to the frontend :D!!
-
+//const axios = require("axios"); 
 const { textToSpeech } = require('./ttsElevenLabs');
 const { evaluateTriggers } = require("./triggerEngine");
+//const { Session } = require("../models/Session"); // Ensure the Session model is imported
 const { computeSummary } = require("./summaryEngine");
 const {
   generateLiveFeedback,
@@ -28,7 +29,6 @@ class AgentManager {
       lastFeedbackTime: 0,
       cooldownMs: 5000, // 5 seconds
       llmBusy: false,   // prevents overlapping LLM calls
-      voiceCooldownUntil: 0,
     };
   }
 
@@ -111,80 +111,47 @@ class AgentManager {
   }
 
   async handleVoiceCommand(text) {
-  console.log("Voice command received:", text);
-  
-  const now = Date.now();
-  if (now < this.coachingState.voiceCooldownUntil) {
-    console.log("Voice cooldown active, ignoring...");
-    this.socket.emit("ai_response", {
-      type: "voiceReply",
-      text: "Please wait 5 seconds between questions.",
-    });
-    return;
-  }
+    console.log("Voice command received:", text);
+    console.log("GEMINI KEY LOADED?", !!process.env.GEMINI_API_KEY);
 
-  console.log("GEMINI KEY LOADED?", !!process.env.GEMINI_API_KEY);
-
-  let response;
-  try {
-    this.coachingState.llmBusy = true;  // this prevents the overlap
-    response = await answerQuestion(text);
-    console.log("GEMINI RESPONSE:", response.text);
-    this.socket.emit("ai_response", response);
-  } catch (err) {
-    console.error("LLM error:", err.message);
-    this.socket.emit("ai_response", {
-      type: "voiceReply",
-      text: "I'm having trouble answering that right now. Keep compressions going.",
-    });
-    return;
-  } finally {
-    this.coachingState.llmBusy = false;
-  }
-
-  // 5 second cooldown
-  this.coachingState.voiceCooldownUntil = now + 5000;
-
-  try {
-    const audioBase64 = await textToSpeech(response.text);
-    this.socket.emit("voiceResponse", { audio: audioBase64 });
-  } catch (err) {
-    console.error("TTS error:", err.message);
-  }
-}
-
-  async endSession() {
-  if (!this.session.active) return;
-  
-  try {
-    // Step 1: Compute summary (DB save happens inside)
-    const summary = await computeSummary(this.session);
-    
-    // Step 2: LLM formats into instructor feedback (with fallback)
+    let response;
     try {
-      const formatted = await generateSummary(summary);
-      this.socket.emit("ai_response", formatted);
-    } catch (llmErr) {
-      console.error("LLM summary error:", llmErr);
-      // Fallback: emit raw summary data
+      response = await answerQuestion(text);
+      console.log("GEMINI RESPONSE:", response.text);
+      this.socket.emit("ai_response", response);
+    } catch (err) {
+      console.error("LLM error:", err.message);
       this.socket.emit("ai_response", {
-        type: "summary",
-        text: "Session complete. Review your compression consistency and technique.",
-        stats: summary.stats
+        type: "voiceReply",
+        text: "I'm having trouble answering that right now. Keep compressions going.",
       });
+      return;
     }
-    
-  } catch (err) {
-    console.error("Summary error:", err);
-    // Final fallback
-    this.socket.emit("ai_response", {
-      type: "summary",
-      text: "Session complete. Review your metrics on the results page.",
-    });
-  } finally {
-    this.resetSession();
+
+    try {
+      const audioBase64 = await textToSpeech(response.text);
+      this.socket.emit("voiceResponse", { audio: audioBase64 });
+    } catch (err) {
+      console.error("TTS error:", err.message);
+    }
   }
-}
+  
+  async endSession() {
+    if (!this.session.active) return;
+    try { // Uncommented after applying gemini
+      const summary = await computeSummary(this.session);  // DB save happens in here
+      this.socket.emit("summary", summary);
+      
+      // LLM converts into instructor-style feedback
+      //const formatted = await generateSummary(rawSummary);
+      //this.socket.emit("ai_response", formatted);
+
+    } catch (err) {
+      console.error("LLM summary error:", err);
+    } finally{
+      this.resetSession();
+    }
+  }
 }
 
 module.exports = { AgentManager };

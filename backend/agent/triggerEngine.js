@@ -1,5 +1,3 @@
-// What feedback is given is decided here
-
 function evaluateTriggers(metrics, mode, allMetrics) {
   const { bpm, relativeDepth, elbowsLocked } = metrics;
 
